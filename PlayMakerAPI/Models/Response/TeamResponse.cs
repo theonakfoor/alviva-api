@@ -22,6 +22,7 @@
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? UserImage { get; set; }
+        public float? HostRating { get; set; }
     }
 
     public class Player

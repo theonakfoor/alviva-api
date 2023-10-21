@@ -77,11 +77,12 @@ namespace PlayMakerAPI.Controllers
         [HttpGet]
         [Authorize]
         [Route("scorekeeper/{id}")]
-        public IActionResult GetMatchByIDAuthorized(string id)
+        public async Task<IActionResult> GetMatchByIDAuthorized(string id)
         {
             try
             {
                 var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = _matchService.GetMatchById(user, id);
                 return StatusCode(response.StatusCode, response.Data);
             }
@@ -96,6 +97,7 @@ namespace PlayMakerAPI.Controllers
             try
             {
                 var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = await _matchService.ProcessAttendance(user, id, request);
                 return (response) ? StatusCode(204) : StatusCode(401);
             }
@@ -110,6 +112,7 @@ namespace PlayMakerAPI.Controllers
             try
             {
                 var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = await _matchService.AddMatchEvent(user, id, request);
                 return StatusCode(response.StatusCode, response.Data);
             }
@@ -124,6 +127,7 @@ namespace PlayMakerAPI.Controllers
             try
             {
                 var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = await _matchService.UpdateMatchEvent(user, id, eventId, request);
                 return (response) ? StatusCode(201) : StatusCode(401);
             }
@@ -138,6 +142,7 @@ namespace PlayMakerAPI.Controllers
             try
             {
                 var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = await _matchService.DeleteMatchEvent(user, id, eventId);
                 return (response) ? StatusCode(204) : StatusCode(401);
             }

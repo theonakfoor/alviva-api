@@ -2,6 +2,8 @@
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using PlayMakerAPI.Models.Response;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Net.Http;
 
 namespace PlayMakerAPI.Services
@@ -43,6 +45,18 @@ namespace PlayMakerAPI.Services
                 insertCmd.ExecuteNonQuery();
             }
 
+        }
+        public bool SubmitHostRating(string hostId, string matchId, int rating)
+        {
+            _databaseService.Initialize();
+            MySqlCommand cmd = new MySqlCommand("INSERT INTO Ratings VALUES(null, @MatchID, @HostID, null, @Rating)", _databaseService.Connection);
+            cmd.Parameters.AddWithValue("@MatchID", matchId);
+            cmd.Parameters.AddWithValue("@HostID", hostId);
+            cmd.Parameters.AddWithValue("@Rating", rating);
+
+            int result = cmd.ExecuteNonQuery();
+
+            return result > 0;
         }
         public User? GetUserByID(int? userId)
         {

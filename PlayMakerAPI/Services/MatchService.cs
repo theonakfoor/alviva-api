@@ -3,9 +3,6 @@ using PlayMakerAPI.Models.Request;
 using PlayMakerAPI.Models.Response;
 using Newtonsoft.Json;
 using PusherServer;
-using System.Security.Cryptography.Xml;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace PlayMakerAPI.Services
 {
@@ -77,7 +74,7 @@ namespace PlayMakerAPI.Services
             switch (type.ToLower())
             {
                 case "upcoming":
-                    MySqlCommand upcomingCmd = new MySqlCommand($"SELECT COUNT(*) OVER(), M.MatchID, M.StartTime, M.EndTime, M.VenueName, M.VenueAddress, M.VenueNumber, M.State, M.Period, T1.TeamID, T1.Gender, T1.Division, CONCAT(C1.ClubName,' ',L1.LeagueName,' ', UPPER(T1.Gender), SUBSTR(T1.Division, 3)) as 'Team1Name', CH1.LastName as 'CoachLastName', C1.Image, JSON_EXTRACT(M.Data, '$.Team1.OverallScore'), JSON_EXTRACT(M.Data, '$.Team1.Score'), JSON_EXTRACT(M.data, '$.Team1.PenaltyKickScore'), T2.TeamID, T2.Gender, T2.Division, CONCAT(C2.ClubName,' ',L2.LeagueName,' ',UPPER(T2.Gender),SUBSTR(T2.Division, 3)) as 'Team2Name', CH2.LastName as 'CoachLastName', C2.Image, JSON_EXTRACT(M.Data, '$.Team2.OverallScore'), JSON_EXTRACT(M.Data, '$.Team2.Score'),  JSON_EXTRACT(M.data, '$.Team2.PenaltyKickScore'), O.UserID, O.FirstName, O.LastName, O.Image, O.AuthID FROM Matches M LEFT JOIN Teams T1 ON (M.Team1ID = T1.TeamID) LEFT JOIN Clubs C1 ON (T1.ClubID = C1.ClubID) LEFT JOIN Leagues L1 ON (T1.LeagueID = L1.LeagueID) LEFT JOIN Users CH1 ON (T1.CoachUserID = CH1.UserID) LEFT JOIN Teams T2 on (M.Team2ID = T2.TeamID) LEFT JOIN Clubs C2 ON (T2.ClubID = C2.ClubID) LEFT JOIN Leagues L2 ON (T2.LeagueID = L2.LeagueID) LEFT JOIN Users CH2 ON (T2.CoachUserID = CH2.UserID) LEFT JOIN Users O ON (M.Owner = O.AuthID) WHERE M.Show = 1 AND M.StartTime >= @TodayMS {teamParams} {((owner != null) ? "AND M.Owner = @OwnerID" : "")} ORDER BY M.StartTime ASC LIMIT @Offset,50", _databaseService.Connection);
+                    MySqlCommand upcomingCmd = new MySqlCommand($"SELECT COUNT(*) OVER(), M.MatchID, M.StartTime, M.EndTime, M.VenueName, M.VenueAddress, M.VenueNumber, M.State, M.Period, T1.TeamID, T1.Gender, T1.Division, CONCAT(C1.ClubName,' ',L1.LeagueName,' ', UPPER(T1.Gender), SUBSTR(T1.Division, 3)) as 'Team1Name', CH1.LastName as 'CoachLastName', C1.Image, JSON_EXTRACT(M.Data, '$.Team1.OverallScore'), JSON_EXTRACT(M.Data, '$.Team1.Score'), JSON_EXTRACT(M.data, '$.Team1.PenaltyKickScore'), T2.TeamID, T2.Gender, T2.Division, CONCAT(C2.ClubName,' ',L2.LeagueName,' ',UPPER(T2.Gender),SUBSTR(T2.Division, 3)) as 'Team2Name', CH2.LastName as 'CoachLastName', C2.Image, JSON_EXTRACT(M.Data, '$.Team2.OverallScore'), JSON_EXTRACT(M.Data, '$.Team2.Score'),  JSON_EXTRACT(M.data, '$.Team2.PenaltyKickScore'), O.UserID, O.FirstName, O.LastName, O.Image, O.AuthID, COALESCE(R.RatingSum/R.RatingCount, NULL) FROM Matches M LEFT JOIN Teams T1 ON (M.Team1ID = T1.TeamID) LEFT JOIN Clubs C1 ON (T1.ClubID = C1.ClubID) LEFT JOIN Leagues L1 ON (T1.LeagueID = L1.LeagueID) LEFT JOIN Users CH1 ON (T1.CoachUserID = CH1.UserID) LEFT JOIN Teams T2 on (M.Team2ID = T2.TeamID) LEFT JOIN Clubs C2 ON (T2.ClubID = C2.ClubID) LEFT JOIN Leagues L2 ON (T2.LeagueID = L2.LeagueID) LEFT JOIN Users CH2 ON (T2.CoachUserID = CH2.UserID) LEFT JOIN Users O ON (M.Owner = O.AuthID) LEFT JOIN ( SELECT HostUserID, SUM(Rating) RatingSum, COUNT(*) RatingCount FROM Ratings GROUP BY HostUserID ) R ON O.UserID = R.HostUserID WHERE M.Show = 1 AND M.StartTime >= @TodayMS {teamParams} {((owner != null) ? "AND M.Owner = @OwnerID" : "")} ORDER BY M.StartTime ASC LIMIT @Offset,50", _databaseService.Connection);
                     upcomingCmd.Parameters.AddWithValue("@TodayMS", todayMs);
                     upcomingCmd.Parameters.AddWithValue("@Offset", offset);
                     if (owner != null)
@@ -85,7 +82,7 @@ namespace PlayMakerAPI.Services
                     result = upcomingCmd.ExecuteReader();
                     break;
                 case "completed":
-                    MySqlCommand completedCmd = new MySqlCommand($"SELECT COUNT(*) OVER(), M.MatchID, M.StartTime, M.EndTime, M.VenueName, M.VenueAddress, M.VenueNumber, M.State, M.Period, T1.TeamID, T1.Gender, T1.Division, CONCAT(C1.ClubName,' ',L1.LeagueName,' ', UPPER(T1.Gender), SUBSTR(T1.Division, 3)) as 'Team1Name', CH1.LastName as 'CoachLastName', C1.Image, JSON_EXTRACT(M.Data, '$.Team1.OverallScore'), JSON_EXTRACT(M.Data, '$.Team1.Score'), JSON_EXTRACT(M.data, '$.Team1.PenaltyKickScore'), T2.TeamID, T2.Gender, T2.Division, CONCAT(C2.ClubName,' ',L2.LeagueName,' ',UPPER(T2.Gender),SUBSTR(T2.Division, 3)) as 'Team2Name', CH2.LastName as 'CoachLastName', C2.Image, JSON_EXTRACT(M.Data, '$.Team2.OverallScore'), JSON_EXTRACT(M.Data, '$.Team2.Score'),  JSON_EXTRACT(M.data, '$.Team2.PenaltyKickScore'), O.UserID, O.FirstName, O.LastName, O.Image, O.AuthID FROM Matches M LEFT JOIN Teams T1 ON (M.Team1ID = T1.TeamID) LEFT JOIN Clubs C1 ON (T1.ClubID = C1.ClubID) LEFT JOIN Leagues L1 ON (T1.LeagueID = L1.LeagueID) LEFT JOIN Users CH1 ON (T1.CoachUserID = CH1.UserID) LEFT JOIN Teams T2 on (M.Team2ID = T2.TeamID) LEFT JOIN Clubs C2 ON (T2.ClubID = C2.ClubID) LEFT JOIN Leagues L2 ON (T2.LeagueID = L2.LeagueID) LEFT JOIN Users CH2 ON (T2.CoachUserID = CH2.UserID) LEFT JOIN Users O ON (M.Owner = O.AuthID) WHERE M.Show = 1 AND (M.Period >= 4 AND M.StartTime < @NowMS) {teamParams} {((owner != null) ? "AND M.Owner = @OwnerID" : "")} ORDER BY M.StartTime DESC LIMIT @Offset,50", _databaseService.Connection);
+                    MySqlCommand completedCmd = new MySqlCommand($"SELECT COUNT(*) OVER(), M.MatchID, M.StartTime, M.EndTime, M.VenueName, M.VenueAddress, M.VenueNumber, M.State, M.Period, T1.TeamID, T1.Gender, T1.Division, CONCAT(C1.ClubName,' ',L1.LeagueName,' ', UPPER(T1.Gender), SUBSTR(T1.Division, 3)) as 'Team1Name', CH1.LastName as 'CoachLastName', C1.Image, JSON_EXTRACT(M.Data, '$.Team1.OverallScore'), JSON_EXTRACT(M.Data, '$.Team1.Score'), JSON_EXTRACT(M.data, '$.Team1.PenaltyKickScore'), T2.TeamID, T2.Gender, T2.Division, CONCAT(C2.ClubName,' ',L2.LeagueName,' ',UPPER(T2.Gender),SUBSTR(T2.Division, 3)) as 'Team2Name', CH2.LastName as 'CoachLastName', C2.Image, JSON_EXTRACT(M.Data, '$.Team2.OverallScore'), JSON_EXTRACT(M.Data, '$.Team2.Score'),  JSON_EXTRACT(M.data, '$.Team2.PenaltyKickScore'), O.UserID, O.FirstName, O.LastName, O.Image, O.AuthID, COALESCE(R.RatingSum/R.RatingCount, NULL) FROM Matches M LEFT JOIN Teams T1 ON (M.Team1ID = T1.TeamID) LEFT JOIN Clubs C1 ON (T1.ClubID = C1.ClubID) LEFT JOIN Leagues L1 ON (T1.LeagueID = L1.LeagueID) LEFT JOIN Users CH1 ON (T1.CoachUserID = CH1.UserID) LEFT JOIN Teams T2 on (M.Team2ID = T2.TeamID) LEFT JOIN Clubs C2 ON (T2.ClubID = C2.ClubID) LEFT JOIN Leagues L2 ON (T2.LeagueID = L2.LeagueID) LEFT JOIN Users CH2 ON (T2.CoachUserID = CH2.UserID) LEFT JOIN Users O ON (M.Owner = O.AuthID) LEFT JOIN ( SELECT HostUserID, SUM(Rating) RatingSum, COUNT(*) RatingCount FROM Ratings GROUP BY HostUserID ) R ON O.UserID = R.HostUserID WHERE M.Show = 1 AND (M.Period >= 4 AND M.StartTime < @NowMS) {teamParams} {((owner != null) ? "AND M.Owner = @OwnerID" : "")} ORDER BY M.StartTime DESC LIMIT @Offset,50", _databaseService.Connection);
                     completedCmd.Parameters.AddWithValue("@NowMS", nowMs);
                     completedCmd.Parameters.AddWithValue("@Offset", offset);
                     if (owner != null)
@@ -108,7 +105,8 @@ namespace PlayMakerAPI.Services
                         AuthID = (result.IsDBNull(31)) ? null : result.GetString(31),
                         FirstName = (result.IsDBNull(28)) ? null : result.GetString(28),
                         LastName = (result.IsDBNull(29)) ? null : result.GetString(29),
-                        UserImage = (result.IsDBNull(30)) ? null : result.GetString(30)
+                        UserImage = (result.IsDBNull(30)) ? null : result.GetString(30),
+                        HostRating = (result.IsDBNull(32)) ? null : result.GetFloat(32)
                     },
                     StartTime = (result.IsDBNull(2)) ? null : result.GetInt64(2),
                     EndTime = (result.IsDBNull(3)) ? null : result.GetInt64(3),
@@ -566,6 +564,16 @@ namespace PlayMakerAPI.Services
                     _databaseService.Disconnect();
                 }
 
+                if(request.State != null || request.Period != null || request.StartTime != null)
+                {
+                    await pusher.TriggerAsync("global-matches", "StateUpdate", new { 
+                        MatchID = id,
+                        State = request.State,
+                        Period = request.Period,
+                        StartTime = request.StartTime
+                    });
+                }
+
                 return true;
             }
 
@@ -739,6 +747,12 @@ namespace PlayMakerAPI.Services
                 {
                     UpdateStatistics("add", request.PlayerID, request.EventType);
                     await pusher.TriggerAsync(id, "Event", new { Event = newEvent });
+                    await pusher.TriggerAsync("global-matches", "EventUpdate", new
+                    {
+                        MatchID = id,
+                        Team1 = match.Team1,
+                        Team2 = match.Team2
+                    });
                     return new Response
                     {
                         StatusCode = 201,
@@ -884,6 +898,12 @@ namespace PlayMakerAPI.Services
                         {
                             UpdateStatistics("add", request.PlayerID, request.EventType);
                             await pusher.TriggerAsync(id, "UpdateEvent", new { Event = match });
+                            await pusher.TriggerAsync("global-matches", "EventUpdate", new
+                            {
+                                MatchID = id,
+                                Team1 = match.Team1,
+                                Team2 = match.Team2
+                            });
                             return true;
                         }
                     }
@@ -1005,6 +1025,12 @@ namespace PlayMakerAPI.Services
                         if (result > 0)
                         {
                             await pusher.TriggerAsync(id, "DeleteEvent", new { Event = match });
+                            await pusher.TriggerAsync("global-matches", "EventUpdate", new
+                            {
+                                MatchID = id,
+                                Team1 = match.Team1,
+                                Team2 = match.Team2
+                            });
                             return true;
                         }
                     }
