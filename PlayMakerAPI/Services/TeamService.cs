@@ -1,5 +1,7 @@
-﻿using MySql.Data.MySqlClient;
+﻿using Microsoft.Net.Http.Headers;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1;
 using PlayMakerAPI.Models.Request;
 using PlayMakerAPI.Models.Response;
 
@@ -15,7 +17,7 @@ namespace PlayMakerAPI.Services
             List<TeamOverview> results = new List<TeamOverview>();
 
             _databaseService.Initialize();
-            MySqlCommand cmd = new MySqlCommand("SELECT COUNT(*) OVER(), CONCAT(C.ClubName, ' ', L.LeagueName, ' ', UPPER(T.Gender),SUBSTR(T.Division, 3)) as 'TeamName', T.TeamID, C.Image FROM Teams T LEFT JOIN Clubs C ON (T.ClubID = C.ClubID) LEFT JOIN Leagues L on (T.LeagueID = L.LeagueID) LIMIT @Offset,100", _databaseService.Connection);
+            MySqlCommand cmd = new MySqlCommand("SELECT COUNT(*) OVER(), CONCAT(C.ClubName, ' ', L.LeagueName, ' ', UPPER(T.Gender),SUBSTR(T.Division, 3)) as 'TeamName', T.TeamID, C.Image, U.LastName, COUNT(P.PlayerID) FROM Teams T LEFT JOIN Clubs C ON (T.ClubID = C.ClubID) LEFT JOIN Leagues L on (T.LeagueID = L.LeagueID) LEFT JOIN Users U ON (T.CoachUserID = U.UserID) LEFT JOIN Players P on (T.TeamID = P.TeamID) GROUP BY T.TeamID LIMIT @Offset,100", _databaseService.Connection);
             cmd.Parameters.AddWithValue("@Offset", offset);
 
             MySqlDataReader result = cmd.ExecuteReader();
@@ -25,9 +27,11 @@ namespace PlayMakerAPI.Services
                 response.Total = result.GetInt16(0);
                 results.Add(new TeamOverview
                 {
-                    TeamID = result.GetInt16(2),
-                    TeamName = result.GetString(1),
-                    ClubImage = result.GetString(3)
+                    TeamID = (result.IsDBNull(2)) ? null : result.GetInt16(2),
+                    TeamName = (result.IsDBNull(1)) ? null : result.GetString(1),
+                    ClubImage = (result.IsDBNull(3)) ? null : result.GetString(3),
+                    Coach = (result.IsDBNull(4)) ? null : result.GetString(4),
+                    PlayerCount = (result.IsDBNull(5)) ? null : result.GetInt16(5)
                 });
             }
 
@@ -95,7 +99,7 @@ namespace PlayMakerAPI.Services
             if (includePlayers)
             {
                 _databaseService.Initialize();
-                MySqlCommand pCmd = new MySqlCommand("SELECT P.PlayerID, P.FirstName, P.LastName, P.Image, P.DOB, P.PlayerNumber FROM Players P WHERE P.TeamID = @TeamID", _databaseService.Connection);
+                MySqlCommand pCmd = new MySqlCommand("SELECT P.PlayerID, P.FirstName, P.LastName, P.Image, P.DOB, P.PlayerNumber, P.Position FROM Players P WHERE P.TeamID = @TeamID", _databaseService.Connection);
                 pCmd.Parameters.AddWithValue("@TeamID", id);
 
                 MySqlDataReader playerResult = pCmd.ExecuteReader();
@@ -109,7 +113,8 @@ namespace PlayMakerAPI.Services
                         LastName = (playerResult.IsDBNull(2)) ? null : playerResult.GetString(2),
                         UserImage = (playerResult.IsDBNull(3)) ? null : playerResult.GetString(3),
                         DOB = (playerResult.IsDBNull(4)) ? null : playerResult.GetString(4),
-                        PlayerNumber = (playerResult.IsDBNull(5)) ? null : playerResult.GetInt16(5)
+                        PlayerNumber = (playerResult.IsDBNull(5)) ? null : playerResult.GetInt16(5),
+                        Position = (playerResult.IsDBNull(6)) ? null : playerResult.GetString(6)
                     });
                 }
 

@@ -3,12 +3,14 @@ using PlayMakerAPI.Models.Request;
 using PlayMakerAPI.Models.Response;
 using Newtonsoft.Json;
 using PusherServer;
+using MySqlX.XDevAPI.Common;
 
 namespace PlayMakerAPI.Services
 {
     public class MatchService
     {
         private DatabaseService _databaseService = new DatabaseService();
+        private AdminService _adminService = new AdminService();
         private TeamService _teamService = new TeamService();
         public Response CreateMatch(string owner, CreateMatchRequest request)
         {
@@ -290,8 +292,8 @@ namespace PlayMakerAPI.Services
         }
         public Response GetMatchById(string owner, string id)
         {
-            if (VerifyOwner(owner, id))
-            {
+            //if (VerifyOwner(owner, id))
+            //{
                 MatchResponse response = null;
 
                 _databaseService.Initialize();
@@ -360,7 +362,7 @@ namespace PlayMakerAPI.Services
                         StatusCode = 200,
                         Data = response
                     };
-            }
+            //}
 
             return new Response
             {
@@ -368,11 +370,33 @@ namespace PlayMakerAPI.Services
                 Data = null
             };
         }
+        public Response GetHostRatingByOwner(string owner)
+        {
+            _databaseService.Initialize();
+            MySqlCommand cmd = new MySqlCommand($"SELECT ROUND(SUM(Ratings.Rating)/COUNT(Ratings.Rating), 2) FROM Ratings JOIN Users ON (Ratings.HostUserID = Users.UserID) WHERE Users.AuthID = @OwnerID", _databaseService.Connection);
+            cmd.Parameters.AddWithValue("@OwnerID", owner);
+            var result = cmd.ExecuteReader();
+
+            HostRatingResponse response = new HostRatingResponse();
+
+            while (result.Read())
+            {
+                response.Rating = (result.IsDBNull(0)) ? null : result.GetFloat(0);
+            }
+
+            _databaseService.Disconnect();
+
+            return new Response
+            {
+                StatusCode = 200,
+                Data = response
+            };
+        }
         public async Task<bool> UpdateMatchById(string owner, string id, UpdateMatchRequest request)
         {
-            if (VerifyOwner(owner, id))
-            {
-                var pusher = new Pusher("1689539", "68ee48eaf887ec8b4684", "0c532358ae5c87877612", new PusherOptions
+            //if (VerifyOwner(owner, id) || _adminService.VerifyUserIsAdmin(owner))
+            //{
+            var pusher = new Pusher("1689539", "68ee48eaf887ec8b4684", "0c532358ae5c87877612", new PusherOptions
                 {
                     Cluster = "us3",
                     Encrypted = true
@@ -575,14 +599,14 @@ namespace PlayMakerAPI.Services
                 }
 
                 return true;
-            }
+            //}
 
-            return false;
+            //return false;
         }
         public async Task<bool> ProcessAttendance(string owner, string id, AttendanceRequest request)
         {
-            if (VerifyOwner(owner, id))
-            {
+            //if (VerifyOwner(owner, id))
+            //{
                 var pusher = new Pusher("1689539", "68ee48eaf887ec8b4684", "0c532358ae5c87877612", new PusherOptions
                 {
                     Cluster = "us3",
@@ -640,14 +664,14 @@ namespace PlayMakerAPI.Services
                     });
                     return true;
                 }
-            }
+            //}
 
             return false;
         }
         public async Task<Response> AddMatchEvent(string owner, string id, NewEventRequest request)
         {
-            if (VerifyOwner(owner, id))
-            {
+            //if (VerifyOwner(owner, id))
+            //{
                 var pusher = new Pusher("1689539", "68ee48eaf887ec8b4684", "0c532358ae5c87877612", new PusherOptions
                 {
                     Cluster = "us3",
@@ -762,7 +786,7 @@ namespace PlayMakerAPI.Services
                         }
                     };
                 }
-            }
+            //}
 
             return new Response
             {
@@ -772,8 +796,8 @@ namespace PlayMakerAPI.Services
         }
         public async Task<bool> UpdateMatchEvent(string owner, string id, string eventId, NewEventRequest request)
         {
-            if(VerifyOwner(owner, id))
-            {
+            //if(VerifyOwner(owner, id))
+            //{
                 var pusher = new Pusher("1689539", "68ee48eaf887ec8b4684", "0c532358ae5c87877612", new PusherOptions
                 {
                     Cluster = "us3",
@@ -908,13 +932,13 @@ namespace PlayMakerAPI.Services
                         }
                     }
                 }
-            }
+            //}
             return false;
         }
         public async Task<bool> DeleteMatchEvent(string owner, string id, string eventId)
         {
-            if(VerifyOwner(owner, id))
-            {
+            //if(VerifyOwner(owner, id))
+            //{
                 var pusher = new Pusher("1689539", "68ee48eaf887ec8b4684", "0c532358ae5c87877612", new PusherOptions
                 {
                     Cluster = "us3",
@@ -1035,16 +1059,39 @@ namespace PlayMakerAPI.Services
                         }
                     }
                 }
-            }
+            //}
             return false;
         } 
+        public async Task<bool> ResetMatchById(string owner, string id, ResetMatchRequest request)
+        {
+            //if (VerifyOwner(owner, id))
+            //{
+                _databaseService.Initialize();
+                MySqlCommand cmd = new MySqlCommand("UPDATE Matches SET State=0, Period=0, Data='{}', StartTime=@StartTime WHERE MatchID=@MatchID", _databaseService.Connection);
+                cmd.Parameters.AddWithValue("@StartTime", request.StartTime);
+                cmd.Parameters.AddWithValue("@MatchID", id);
+                cmd.ExecuteNonQuery();
+                _databaseService.Disconnect();
+
+                var pusher = new Pusher("1689539", "68ee48eaf887ec8b4684", "0c532358ae5c87877612", new PusherOptions
+                {
+                    Cluster = "us3",
+                    Encrypted = true
+                });
+
+                await pusher.TriggerAsync(id, "ResetGame", new { StartTime = request.StartTime });
+
+                return true;
+            //}
+
+            //return false;
+        }
         public bool DeleteMatchById(string owner, string id)
         {
-            if(VerifyOwner(owner, id))
+            if(VerifyOwner(owner, id) || _adminService.VerifyUserIsAdmin(owner))
             {
                 _databaseService.Initialize();
-                MySqlCommand deleteCmd = new MySqlCommand("DELETE FROM Matches WHERE MatchID=@MatchID AND Owner=@OwnerID", _databaseService.Connection);
-                deleteCmd.Parameters.AddWithValue("@OwnerID", owner);
+                MySqlCommand deleteCmd = new MySqlCommand("DELETE FROM Matches WHERE MatchID=@MatchID", _databaseService.Connection);
                 deleteCmd.Parameters.AddWithValue("@MatchID", id);
                 int deleteCount = deleteCmd.ExecuteNonQuery();
                 _databaseService.Disconnect();

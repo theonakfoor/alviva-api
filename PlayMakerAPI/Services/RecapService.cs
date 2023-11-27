@@ -21,8 +21,6 @@ namespace PlayMakerAPI.Services
 
             while (result.Read())
             {
-                response.Total = result.GetInt16(0);
-
                 var events = JsonConvert.DeserializeObject<MatchData>(result.GetString(8)).Events;
 
                 if(events != null)
@@ -39,6 +37,7 @@ namespace PlayMakerAPI.Services
 
             _databaseService.Disconnect();
 
+            response.Total = response.Results.Count;
             response.HasMore = (response.Total > 500 && (offset + 500) < response.Total);
             response.Offset = response.HasMore ? offset + 500 : null;
 

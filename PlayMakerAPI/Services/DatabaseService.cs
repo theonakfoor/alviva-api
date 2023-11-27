@@ -12,16 +12,14 @@ namespace PlayMakerAPI.Services
         private bool Connected = false;
         public MySqlConnection Connection { get; set; }
 
-        public DatabaseService()
-        {
-            Initialize();
-        }
-
         public void Initialize()
         {
-            this.Connection = new MySqlConnection(string.Format("Server={0}; database={1}; UID={2}; password={3}", Server, DBName, Username, Password));
-            this.Connection.Open();
-            this.Connected = true;
+            if (!this.Connected)
+            {
+                this.Connection = new MySqlConnection(string.Format("Server={0}; database={1}; UID={2}; password={3}", Server, DBName, Username, Password));
+                this.Connection.Open();
+                this.Connected = true;
+            }
         }
 
         public bool IsConnected()
