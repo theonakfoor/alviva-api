@@ -387,6 +387,9 @@ namespace PlayMakerAPI.Services
                                     }
 
                                     _databaseService.Disconnect();
+
+                                    if (clubId == null)
+                                        continue;
                                 }
 
                                 break;
@@ -475,8 +478,8 @@ namespace PlayMakerAPI.Services
 
                                 _databaseService.Disconnect();
 
-                                if (teamId == null)
-                                {
+                                if (teamId == null && coachId != null)
+                                {                                     
                                     _databaseService.Initialize();
                                     MySqlCommand insertTeamCmd = new MySqlCommand("INSERT INTO Teams VALUES (null, @ClubID, 1, @Owner, @Gender, @Division, @ManagerUserID, @CoachUserID, @AssistantCoachUserIDs, @Identifier, null); SELECT LAST_INSERT_ID();", _databaseService.Connection);
                                     insertTeamCmd.Parameters.AddWithValue("@ClubID", clubId);
@@ -486,7 +489,7 @@ namespace PlayMakerAPI.Services
                                     insertTeamCmd.Parameters.AddWithValue("@ManagerUserID", managerId);
                                     insertTeamCmd.Parameters.AddWithValue("@CoachUserID", coachId);
                                     insertTeamCmd.Parameters.AddWithValue("@AssistantCoachUserIDs", JsonConvert.SerializeObject(asstCoachIds));
-                                    insertTeamCmd.Parameters.AddWithValue("@Identifier", $"{coachLastName.Replace("'", @"\'").Trim()} \\\'{columns[2].Trim().Substring(2).Replace("'", @"\'").Trim()}");
+                                    insertTeamCmd.Parameters.AddWithValue("@Identifier", $"{columns[2].Trim().Substring(2).Replace("'", @"\'").Trim()} {clubName.Trim().ToUpper().Replace("'", @"\'").Trim()} {coachLastName.Trim().ToUpper().Replace("'", @"\'").Trim()}");
 
                                     MySqlDataReader insertTeamResult = insertTeamCmd.ExecuteReader();
 
@@ -497,6 +500,9 @@ namespace PlayMakerAPI.Services
 
                                     _databaseService.Disconnect();
                                 }
+
+                                if (teamId == null)
+                                    continue;
 
                                 break;
                             case "player":
