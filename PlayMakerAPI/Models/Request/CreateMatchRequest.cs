@@ -12,8 +12,7 @@ namespace PlayMakerAPI.Models.Request
         public int Team2ID { get; set; }
         [Required]
         public string VenueName { get; set; }
-        [Required]
-        public string VenueAddress { get; set; }
+        public string? VenueAddress { get; set; }
         [Required]
         public string VenueNumber { get; set; }
         public List<int>? SharedWith { get; set; }

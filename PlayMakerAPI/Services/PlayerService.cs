@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using AlvivaAPI.Models.Request;
+using MySql.Data.MySqlClient;
 using PlayMakerAPI.Models.Request;
 using PlayMakerAPI.Models.Response;
 
@@ -7,6 +8,7 @@ namespace PlayMakerAPI.Services
     public class PlayerService
     {
         private DatabaseService _databaseService = new DatabaseService();
+        private AdminService _adminService = new AdminService();
         public Response GetLeaderboard(string type = "goals", int offset = 0)
         {
             ListLeaderboardResponse response = new ListLeaderboardResponse();
@@ -52,6 +54,125 @@ namespace PlayMakerAPI.Services
             {
                 StatusCode = 200,
                 Data = response
+            };
+        }
+        public Response GetPlayerStatistics(int playerId)
+        {
+            PlayerStatisticsResponse response = new PlayerStatisticsResponse();
+
+            _databaseService.Initialize();
+            MySqlCommand cmd = new MySqlCommand("SELECT Goals, OwnGoals, PenaltyKicks, YellowCards, RedCards, Ejections, Fouls FROM Statistics WHERE PlayerID=@PlayerID", _databaseService.Connection);
+            cmd.Parameters.AddWithValue("@PlayerID", playerId);
+            var result = cmd.ExecuteReader();
+
+            while (result.Read())
+            {
+                response = new PlayerStatisticsResponse
+                {
+                    Goals = (result.IsDBNull(0)) ? 0 : result.GetInt16(0),
+                    OwnGoals = (result.IsDBNull(1)) ? 0 : result.GetInt16(1),
+                    PenaltyKicks = (result.IsDBNull(2)) ? 0 : result.GetInt16(2),
+                    YellowCards = (result.IsDBNull(3)) ? 0 : result.GetInt16(3),
+                    RedCards = (result.IsDBNull(4)) ? 0 : result.GetInt16(4),
+                    Ejections = (result.IsDBNull(5)) ? 0 : result.GetInt16(5),
+                    Fouls = (result.IsDBNull(6)) ? 0 : result.GetInt16(6)
+                };
+            }
+
+            _databaseService.Disconnect();
+
+            return new Response
+            {
+                StatusCode = 200,
+                Data = response
+            };
+        }
+        public bool UpdatePlayerByID(int playerId, string user, UpdatePlayerRequest request)
+        {
+            if(_adminService.VerifyUserIsAdmin(user))
+            {
+                _databaseService.Initialize();
+                MySqlCommand cmd = new MySqlCommand("UPDATE Players SET FirstName=@FirstName, LastName=@LastName, Image=@UserImage, PlayerNumber=@PlayerNumber, DOB=@DOB, Position=@Position, TeamID=@TeamID WHERE PlayerID=@PlayerID", _databaseService.Connection);
+                cmd.Parameters.AddWithValue("@PlayerID", playerId);
+                cmd.Parameters.AddWithValue("@FirstName", request.FirstName);
+                cmd.Parameters.AddWithValue("@LastName", request.LastName);
+                cmd.Parameters.AddWithValue("@UserImage", request.UserImage);
+                cmd.Parameters.AddWithValue("@PlayerNumber", request.PlayerNumber);
+                cmd.Parameters.AddWithValue("@DOB", request.DOB);
+                cmd.Parameters.AddWithValue("@Position", request.Position);
+                cmd.Parameters.AddWithValue("@TeamID", request.TeamID);
+                var result = cmd.ExecuteNonQuery();
+                _databaseService.Disconnect();
+
+                if (result > 0)
+                    return true;
+            }
+
+            return false;
+        }
+        public bool DeletePlayerByID(int playerId, string user)
+        {
+            if(_adminService.VerifyUserIsAdmin(user))
+            {
+                _databaseService.Initialize();
+                MySqlCommand cmd = new MySqlCommand("DELETE FROM Players WHERE PlayerID=@PlayerID", _databaseService.Connection);
+                cmd.Parameters.AddWithValue("@PlayerID", playerId);
+                var result = cmd.ExecuteNonQuery();
+                _databaseService.Disconnect();
+
+                if (result > 0)
+                    return true;
+            }
+
+            return false;
+        }
+
+        public Response CreatePlayer(string user, UpdatePlayerRequest request)
+        {
+            if(_adminService.VerifyUserIsAdmin(user))
+            {
+                _databaseService.Initialize();
+                MySqlCommand cmd = new MySqlCommand("INSERT INTO Players VALUES(null, @TeamID, @User, @FirstName, @LastName, @UserImage, @PlayerNumber, @DOB, @Position, null); SELECT LAST_INSERT_ID();", _databaseService.Connection);
+                cmd.Parameters.AddWithValue("@FirstName", request.FirstName);
+                cmd.Parameters.AddWithValue("@LastName", request.LastName);
+                cmd.Parameters.AddWithValue("@UserImage", request.UserImage);
+                cmd.Parameters.AddWithValue("@PlayerNumber", request.PlayerNumber);
+                cmd.Parameters.AddWithValue("@DOB", request.DOB);
+                cmd.Parameters.AddWithValue("@Position", request.Position);
+                cmd.Parameters.AddWithValue("@User", user);
+                cmd.Parameters.AddWithValue("@TeamID", request.TeamID);
+                var result = cmd.ExecuteReader();
+
+                Int32 createdID = -1;
+
+                while(result.Read())
+                {
+                    createdID = (result.IsDBNull(0)) ? -1 : result.GetInt32(0);
+                }
+
+                _databaseService.Disconnect();
+
+                if (createdID > -1)
+                    return new Response
+                    {
+                        StatusCode = 200,
+                        Data = new
+                        {
+                            PlayerId = createdID
+                        }
+                    };
+
+                return new Response
+                {
+                    StatusCode = 500,
+                    Data = null
+                };
+            }
+
+            return new Response
+            {
+                StatusCode = 401,
+                Data = null
             };
         }
     }

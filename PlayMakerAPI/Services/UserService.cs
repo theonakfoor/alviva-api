@@ -1,10 +1,6 @@
-﻿using Microsoft.OpenApi.Writers;
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using PlayMakerAPI.Models.Response;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Net.Http;
 
 namespace PlayMakerAPI.Services
 {

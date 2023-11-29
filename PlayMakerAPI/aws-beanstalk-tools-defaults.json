@@ -1,0 +1,20 @@
+
+{
+    "region" : "us-west-1",
+    "configuration" : "Debug",
+    "framework"     : "net7.0",
+    "self-contained" : true,
+    "application"    : "PlayMakerAPI",
+    "environment"    : "PlayMakerAPI-prod",
+    "enable-xray"    : false,
+    "enhanced-health-type" : "basic",
+    "additional-options"   : "",
+    "solution-stack"       : "64bit Amazon Linux 2 v2.6.0 running .NET Core",
+    "environment-type"     : "SingleInstance",
+    "cname"                : "playmakerapi-prod",
+    "instance-type"        : "t3a.medium",
+    "key-pair"             : "alva-app",
+    "instance-profile"     : "aws-elasticbeanstalk-ec2-role",
+    "service-role"         : "aws-elasticbeanstalk-service-role",
+    "proxy-server"         : "nginx"
+}

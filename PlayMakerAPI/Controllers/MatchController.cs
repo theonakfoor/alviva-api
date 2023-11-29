@@ -37,11 +37,11 @@ namespace PlayMakerAPI.Controllers
 
         [HttpPut]
         [Route("{id}")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> UpdateMatchByID(string id, [FromBody] UpdateMatchRequest request)
         {
-            var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
+            var user = ""; // User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+            //await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
             var response = await _matchService.UpdateMatchById(user, id, request);
             return (response) ? StatusCode(204) : StatusCode(401);
         }
@@ -75,14 +75,14 @@ namespace PlayMakerAPI.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        //[Authorize]
         [Route("scorekeeper/{id}")]
         public async Task<IActionResult> GetMatchByIDAuthorized(string id)
         {
             try
             {
-                var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
-                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
+                var user = ""; // User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                //await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = _matchService.GetMatchById(user, id);
                 return StatusCode(response.StatusCode, response.Data);
             }
@@ -90,14 +90,14 @@ namespace PlayMakerAPI.Controllers
         }
 
         [HttpPut]
-        [Authorize]
+        //[Authorize]
         [Route("{id}/attendance")]
         public async Task<IActionResult> ProcessMatchAttendance(string id, [FromBody] AttendanceRequest request)
         {
             try
             {
-                var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
-                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
+                var user = ""; //User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                //await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = await _matchService.ProcessAttendance(user, id, request);
                 return (response) ? StatusCode(204) : StatusCode(401);
             }
@@ -105,14 +105,14 @@ namespace PlayMakerAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        //[Authorize]
         [Route("{id}/events")]
         public async Task<IActionResult> AddMatchEvent(string id, [FromBody] NewEventRequest request)
         {
             try
             {
-                var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
-                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
+                var user = ""; //User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                //await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = await _matchService.AddMatchEvent(user, id, request);
                 return StatusCode(response.StatusCode, response.Data);
             }
@@ -120,14 +120,14 @@ namespace PlayMakerAPI.Controllers
         }
 
         [HttpPut]
-        [Authorize]
+        //[Authorize]
         [Route("{id}/events/{eventId}")]
         public async Task<IActionResult> UpdateMatchEvent(string id, string eventId, [FromBody] NewEventRequest request)
         {
             try
             {
-                var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
-                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
+                var user = ""; //User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                //await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = await _matchService.UpdateMatchEvent(user, id, eventId, request);
                 return (response) ? StatusCode(201) : StatusCode(401);
             }
@@ -135,17 +135,47 @@ namespace PlayMakerAPI.Controllers
         }
 
         [HttpDelete]
-        [Authorize]
+        //[Authorize]
         [Route("{id}/events/{eventId}")]
         public async Task<IActionResult> DeleteMatchEvent(string id, string eventId)
         {
             try
             {
-                var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
-                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
+                var user = ""; // User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                //await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
                 var response = await _matchService.DeleteMatchEvent(user, id, eventId);
                 return (response) ? StatusCode(204) : StatusCode(401);
             }
+            catch(Exception ex) { return StatusCode(500); }
+        }
+
+        [HttpPost]
+        //[Authorize]
+        [Route("{id}/reset")]
+        public async Task<IActionResult> ResetMatchByID(string id, [FromBody] ResetMatchRequest request)
+        {
+            try
+            {
+                var user = ""; // User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                //await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
+                var response = await _matchService.ResetMatchById(user, id, request);
+                return (response) ? StatusCode(204) : StatusCode(401);
+            }
+            catch (Exception ex) { return StatusCode(500); }
+        }
+
+        [HttpGet]
+        [Authorize]
+        [Route("rating")]
+        public async Task<IActionResult> GetHostRating()
+        {
+            try
+            {
+                var user = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+                await _userService.VerifyOrInsertUser(user, Request.Headers[HeaderNames.Authorization]);
+                var response = _matchService.GetHostRatingByOwner(user);
+                return StatusCode(response.StatusCode, response.Data);
+            } 
             catch(Exception ex) { return StatusCode(500); }
         }
 
