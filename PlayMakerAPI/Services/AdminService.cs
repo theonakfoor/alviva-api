@@ -355,6 +355,9 @@ namespace PlayMakerAPI.Services
                         {
                             case "club":
 
+                                if (columns.Length < 2 || columns[1].Trim() == "")
+                                    goto SkipToNext;
+
                                 clubName = columns[1];
 
                                 _databaseService.Initialize();
@@ -377,7 +380,7 @@ namespace PlayMakerAPI.Services
                                     insertClubCmd.Parameters.AddWithValue("@ClubName", columns[1].Trim().Replace("'", @"\'").Trim());
                                     insertClubCmd.Parameters.AddWithValue("@Identifier", columns[1].Trim().ToUpper().Replace("'", @"\'").Trim());
                                     insertClubCmd.Parameters.AddWithValue("@AssociationIdentifier", columns[1].Trim().ToUpper().Replace("'", @"\'").Trim());
-                                    insertClubCmd.Parameters.AddWithValue("@Image", columns[2]);
+                                    insertClubCmd.Parameters.AddWithValue("@Image", (columns.Length < 3 || columns[2].Trim() == "") ? null : columns[2]);
 
                                     MySqlDataReader insertClubResult = insertClubCmd.ExecuteReader();
 
@@ -389,13 +392,16 @@ namespace PlayMakerAPI.Services
                                     _databaseService.Disconnect();
 
                                     if (clubId == null)
-                                        continue;
+                                        goto SkipToNext;
                                 }
 
                                 break;
                             case "coach":
                             case "assistant coach":
                             case "manager":
+
+                                if (columns.Length < 3 || columns[1].Trim() == "" || columns[2].Trim() == "")
+                                    continue;
 
                                 int? existingUser = null;
 
@@ -435,7 +441,7 @@ namespace PlayMakerAPI.Services
                                     MySqlCommand insertUserCmd = new MySqlCommand("INSERT INTO Users VALUES (null, null, @FirstName, @LastName, @Image, null, null); SELECT LAST_INSERT_ID();", _databaseService.Connection);
                                     insertUserCmd.Parameters.AddWithValue("@FirstName", columns[1].Replace("'", @"\'").Trim());
                                     insertUserCmd.Parameters.AddWithValue("@LastName", columns[2].Replace("'", @"\'").Trim());
-                                    insertUserCmd.Parameters.AddWithValue("@Image", columns[3].Replace("'", @"\'").Trim());
+                                    insertUserCmd.Parameters.AddWithValue("@Image", (columns.Length < 4 || columns[3].Trim() == "") ? null : columns[3].Replace("'", @"\'").Trim());
 
                                     MySqlDataReader insertUserResult = insertUserCmd.ExecuteReader();
 
@@ -461,6 +467,9 @@ namespace PlayMakerAPI.Services
 
                                 break;
                             case "team":
+
+                                if (coachId == null || columns.Length < 3 || columns[1].Trim() == "" || columns[2].Trim() == "")
+                                    goto SkipToNext;
 
                                 ageDivision = columns[2];
 
@@ -502,10 +511,13 @@ namespace PlayMakerAPI.Services
                                 }
 
                                 if (teamId == null)
-                                    continue;
+                                    goto SkipToNext;
 
                                 break;
                             case "player":
+
+                                if (columns.Length < 3 || columns[1].Trim() == "" || columns[2].Trim() == "")
+                                    continue;
 
                                 int? existingPlayer = null;
 
@@ -532,10 +544,10 @@ namespace PlayMakerAPI.Services
                                     insertPlayerCmd.Parameters.AddWithValue("@Owner", user);
                                     insertPlayerCmd.Parameters.AddWithValue("@FirstName", columns[1].Trim().Replace("'", @"\'").Trim());
                                     insertPlayerCmd.Parameters.AddWithValue("@LastName", columns[2].Trim().Replace("'", @"\'").Trim());
-                                    insertPlayerCmd.Parameters.AddWithValue("@Image", columns[4].Trim().Replace("'", @"\'").Trim());
-                                    insertPlayerCmd.Parameters.AddWithValue("@PlayerNumber", columns[3].Trim().Replace("'", @"\'").Trim());
+                                    insertPlayerCmd.Parameters.AddWithValue("@Image", (columns.Length < 5 || columns[4].Trim() == "") ? null : columns[4].Trim().Replace("'", @"\'").Trim());
+                                    insertPlayerCmd.Parameters.AddWithValue("@PlayerNumber", (columns.Length < 4 || columns[3].Trim() == "") ? null : columns[3].Trim().Replace("'", @"\'").Trim());
                                     insertPlayerCmd.Parameters.AddWithValue("@DOB", $"{ageDivision}-01-01");
-                                    insertPlayerCmd.Parameters.AddWithValue("@Position", columns[5].Trim().Replace("'", @"\'").Trim());
+                                    insertPlayerCmd.Parameters.AddWithValue("@Position", (columns.Length < 6 || columns[5].Trim() == "") ? null : columns[5].Trim().Replace("'", @"\'").Trim());
 
                                     insertPlayerCmd.ExecuteNonQuery();
                                 }
@@ -548,6 +560,9 @@ namespace PlayMakerAPI.Services
                 
                     if(teamId != null)
                         teams.Add((TeamResponse)_teamService.GetTeamByID(teamId, true).Data);
+
+                    SkipToNext:
+                        continue;
                 }
 
                 return new Response
