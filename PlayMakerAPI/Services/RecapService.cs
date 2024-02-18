@@ -30,7 +30,7 @@ namespace PlayMakerAPI.Services
                         RecapID = result.IsDBNull(1) ? null : result.GetString(1),
                         StartTime = result.IsDBNull(2) ? null : result.GetInt64(2),
                         Period = result.IsDBNull(3) ? null : result.GetInt16(3),
-                        ThumbImage = (result.GetInt16(4) > result.GetInt16(5)) ? result.GetString(6) : result.GetString(7)
+                        ThumbImage = (result.GetInt16(4) > result.GetInt16(5)) ? ( (result.IsDBNull(6)) ? null : result.GetString(6)) : ( (result.IsDBNull(7) ? null : result.GetString(7)) )
                     });
                 }
             }

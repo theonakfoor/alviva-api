@@ -17,7 +17,7 @@ namespace PlayMakerAPI.Services
             List<TeamOverview> results = new List<TeamOverview>();
 
             _databaseService.Initialize();
-            MySqlCommand cmd = new MySqlCommand("SELECT COUNT(*) OVER(), CONCAT(C.ClubName, ' ', L.LeagueName, ' ', UPPER(T.Gender),SUBSTR(T.Division, 3)) as 'TeamName', T.TeamID, C.Image, U.LastName, COUNT(P.PlayerID) FROM Teams T LEFT JOIN Clubs C ON (T.ClubID = C.ClubID) LEFT JOIN Leagues L on (T.LeagueID = L.LeagueID) LEFT JOIN Users U ON (T.CoachUserID = U.UserID) LEFT JOIN Players P on (T.TeamID = P.TeamID) GROUP BY T.TeamID LIMIT @Offset,100", _databaseService.Connection);
+            MySqlCommand cmd = new MySqlCommand("SELECT COUNT(*) OVER(), CASE WHEN T.LeagueID != 2 THEN CONCAT(C.ClubName, ' ', L.LeagueName, ' ', UPPER(T.Gender),SUBSTR(T.Division, 3)) ELSE CONCAT(C.ClubName, ' ', L.LeagueName) END as 'TeamName', T.TeamID, C.Image, U.LastName, COUNT(P.PlayerID) FROM Teams T LEFT JOIN Clubs C ON (T.ClubID = C.ClubID) LEFT JOIN Leagues L on (T.LeagueID = L.LeagueID) LEFT JOIN Users U ON (T.CoachUserID = U.UserID) LEFT JOIN Players P on (T.TeamID = P.TeamID) GROUP BY T.TeamID LIMIT @Offset,100", _databaseService.Connection);
             cmd.Parameters.AddWithValue("@Offset", offset);
 
             MySqlDataReader result = cmd.ExecuteReader();
@@ -57,7 +57,7 @@ namespace PlayMakerAPI.Services
             List<int>? assistantCoaches = null;
 
             _databaseService.Initialize();
-            MySqlCommand cmd = new MySqlCommand("SELECT T.TeamID, CONCAT(C.ClubName, ' ', L.LeagueName, ' ', UPPER(T.Gender),SUBSTR(T.Division, 3)), T.Gender, T.Division, T.Identifier, T.ManagerUserID, T.CoachUserID, T.AssistantCoachUserIDs, C.ClubID, C.ClubName, C.Identifier, C.AssociationIdentifier, C.Image, L.LeagueID, L.LeagueName, L.Identifier, L.Image FROM Teams T JOIN Clubs C on T.ClubID = C.ClubID JOIN Leagues L on T.LeagueID = L.LeagueID WHERE T.TeamID = @TeamID", _databaseService.Connection);
+            MySqlCommand cmd = new MySqlCommand("SELECT T.TeamID, CASE WHEN T.LeagueID != 2 THEN CONCAT(C.ClubName, ' ', L.LeagueName, ' ', UPPER(T.Gender),SUBSTR(T.Division, 3)) ELSE CONCAT(C.ClubName, ' ', L.LeagueName) END as 'TeamName', T.Gender, T.Division, T.Identifier, T.ManagerUserID, T.CoachUserID, T.AssistantCoachUserIDs, C.ClubID, C.ClubName, C.Identifier, C.AssociationIdentifier, C.Image, L.LeagueID, L.LeagueName, L.Identifier, L.Image FROM Teams T JOIN Clubs C on T.ClubID = C.ClubID JOIN Leagues L on T.LeagueID = L.LeagueID WHERE T.TeamID = @TeamID", _databaseService.Connection);
             cmd.Parameters.AddWithValue("@TeamID", id);
 
             MySqlDataReader result = cmd.ExecuteReader();
