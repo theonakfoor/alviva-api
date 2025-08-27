@@ -4,10 +4,10 @@ namespace PlayMakerAPI.Services
 {
     public class DatabaseService
     {
-        private string Server = "REDACTED";
-        private string DBName = "core";
-        private string Username = "system";
-        private string Password = "REDACTED";
+        private string Server = Environment.GetEnvironmentVariable("DB_SERVER");
+        private string DBName = Environment.GetEnvironmentVariable("DB_NAME");
+        private string Username = Environment.GetEnvironmentVariable("DB_USER");
+        private string Password = Environment.GetEnvironmentVariable("DB_PASS");
 
         private bool Connected = false;
         public MySqlConnection Connection { get; set; }

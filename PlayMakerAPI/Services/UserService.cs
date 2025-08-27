@@ -6,7 +6,10 @@ namespace PlayMakerAPI.Services
 {
     public class UserService
     {
+        private string Auth0Domain = Environment.GetEnvironmentVariable("AUTH0_DOMAIN");
+
         private DatabaseService _databaseService = new DatabaseService();
+
         public async Task VerifyOrInsertUser(string userId, string accessToken)
         {
             int resultCount = 0;
@@ -28,7 +31,7 @@ namespace PlayMakerAPI.Services
             {
                 HttpClient _client = new HttpClient();
                 _client.DefaultRequestHeaders.Add("Authorization", accessToken);
-                HttpResponseMessage response = await _client.GetAsync("https://dev-bfq0h45o5v2zcw6h.us.auth0.com/userinfo");
+                HttpResponseMessage response = await _client.GetAsync($"https://{Auth0Domain}/userinfo");
                 ProfileInfo profileInfo = JsonConvert.DeserializeObject<ProfileInfo>(await response.Content.ReadAsStringAsync());
 
                 _databaseService.Initialize();
